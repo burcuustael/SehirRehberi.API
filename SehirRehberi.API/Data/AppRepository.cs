@@ -42,13 +42,13 @@ namespace SehirRehberi.API.Data
 
         public List<Photo> GetPhotosByCity(int cityId)
         {
-            var photos = _dataContext.Photos.Include(p=>p.CityId==cityId).ToList();
+            var photos = _dataContext.Photos.Where(p=>p.CityId==cityId).ToList();
             return photos;
         }
 
         public bool SaveAll()
         {
-            return _dataContext.SaveChanges() > 0;
+            return _dataContext.SaveChanges()>0;
         }
     }
 }

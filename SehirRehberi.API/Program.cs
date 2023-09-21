@@ -1,8 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using SehirRehberi.API.Data;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddDbContext<DataContext>(options =>
@@ -10,14 +12,31 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration["DefaultConnection"]);
 });
 
+
+//key okunmasÄ± iÃ§in
+
+var key = Encoding.ASCII.GetBytes(builder.Configuration.GetSection("AppSettings:Token").Value);
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 
 builder.Services.AddScoped<IAppRepository, AppRepository>();
 
-//þehrin fotolarýnýn detaylarý ile çekilirken oluþan loop u önlemek için eklenir...
+//jwt 
 
-builder.Services.AddControllers().AddJsonOptions(opt =>
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options => {
+options.TokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuerSigningKey = true,
+    //key okuma yukarÃ½da
+    IssuerSigningKey = new SymmetricSecurityKey(key),
+    ValidateIssuer = false,
+    ValidateAudience = false
+};
+
+//ÅŸehrin fotolarÄ±nÄ±n detaylarÄ± ile Ã§ekilirken oluÅŸan loop u Ã¶nlemek iÃ§in eklenir...
+
+builder.Services.AddMvc().AddJsonOptions(opt =>
 {
     opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
@@ -25,6 +44,7 @@ builder.Services.AddControllers().AddJsonOptions(opt =>
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -41,7 +61,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
 app.UseAuthorization();
+
+app.UseAuthentication();
 
 app.MapControllers();
 
